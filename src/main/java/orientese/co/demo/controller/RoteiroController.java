@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import orientese.co.demo.dto.RoteiroRequestDTO;
+import orientese.co.demo.dto.RoteiroResponseDTO;
 import orientese.co.demo.model.Roteiro;
 import orientese.co.demo.service.RoteiroService;
 
@@ -21,17 +23,18 @@ public class RoteiroController {
     }
 
     @PostMapping
-    public Roteiro salvar(@Valid @RequestBody Roteiro roteiro) {
-        return roteiroService.salvar(roteiro);
+    public ResponseEntity<RoteiroResponseDTO> criar(@Valid @RequestBody RoteiroRequestDTO dto) {
+        RoteiroResponseDTO response = roteiroService.salvar(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public List<Roteiro> consultarTodos() {
+    public List<RoteiroResponseDTO> consultarTodos() {
         return roteiroService.consultarTodos();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Roteiro> consultar(@PathVariable Long id) {
+    public ResponseEntity<RoteiroResponseDTO> consultar(@PathVariable Long id) {
         return roteiroService.consultar(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

@@ -1,6 +1,8 @@
 package orientese.co.demo.service;
 
 import org.springframework.stereotype.Service;
+import orientese.co.demo.dto.RoteiroRequestDTO;
+import orientese.co.demo.dto.RoteiroResponseDTO;
 import orientese.co.demo.model.Roteiro;
 import orientese.co.demo.repository.RoteiroRepository;
 
@@ -15,20 +17,36 @@ public class RoteiroService {
         this.roteiroRepository = roteiroRepository;
     }
 
-    public Roteiro salvar(Roteiro roteiro) {
-        if (roteiro.getBlocos() != null) {
-            roteiro.getBlocos().forEach(bloco -> bloco.setRoteiro(roteiro));
-        }
+    public RoteiroResponseDTO salvar(RoteiroRequestDTO dto) {
+        // 1. Converte DTO para Entity
+        Roteiro roteiro = new Roteiro();
+        roteiro.setTitulo(dto.titulo());
+        roteiro.setDuracaoEstimada(dto.duracaoEstimada());
 
-        return roteiroRepository.save(roteiro);
+        // 2. Salva a Entity no banco
+        Roteiro salvo = roteiroRepository.save(roteiro);
+
+        // 3. Retorna o ResponseDTO
+        return new RoteiroResponseDTO(salvo.getId(), salvo.getTitulo(), salvo.getDuracaoEstimada());
     }
 
-    public List<Roteiro> consultarTodos() {
-        return roteiroRepository.findAll();
+    public List<RoteiroResponseDTO> consultarTodos() {
+        return roteiroRepository.findAll()
+                .stream()
+                .map(roteiro -> new RoteiroResponseDTO(
+                        roteiro.getId(),
+                        roteiro.getTitulo(),
+                        roteiro.getDuracaoEstimada()
+                )).toList();
     }
 
-    public Optional<Roteiro> consultar(Long idRoteiro) {
-        return roteiroRepository.findById(idRoteiro);
+    public Optional<RoteiroResponseDTO> consultar(Long id) {
+        return roteiroRepository.findById(id)
+                .map(roteiro -> new RoteiroResponseDTO(
+                        roteiro.getId(),
+                        roteiro.getTitulo(),
+                        roteiro.getDuracaoEstimada()
+                ));
     }
 
     public Optional<Roteiro> atualizar(Long id, Roteiro roteiroAtualizado) {
