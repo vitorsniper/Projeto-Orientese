@@ -18,6 +18,7 @@ public class Roteiro {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     @NotBlank(message = "O título é obrigatório")
     private String titulo;
     private String subtitulo;

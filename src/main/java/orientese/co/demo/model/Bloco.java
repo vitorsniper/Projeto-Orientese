@@ -17,15 +17,12 @@ public class Bloco {
     @JoinColumn(name = "roteiro_id")
     @JsonBackReference
     private Roteiro roteiro;
-
-
     private String tituloBloco;
     private String tempoInicio;
     private String tempoFim;
-    private Integer ordem;
-
     @Lob
     private String direcaoVisual;
     @Lob
-    private String locucao;
+    private String conteudo;
+    private Integer ordem;
 }
