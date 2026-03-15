@@ -1,5 +1,6 @@
 package orientese.co.demo.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,5 +21,10 @@ public class RestExceptionHandler {
                 .collect(Collectors.toList());
 
         return ResponseEntity.badRequest().body(erros);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleConflict(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 }

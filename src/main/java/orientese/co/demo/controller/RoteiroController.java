@@ -29,20 +29,25 @@ public class RoteiroController {
     }
 
     @GetMapping
-    public List<RoteiroResponseDTO> consultarTodos() {
+    public List<RoteiroResponseDTO> consultarPorTitulo(@RequestParam(required = false) String titulo) {
+        if (titulo != null && !titulo.isBlank()) {
+            return roteiroService.consultarPorTitulo(titulo);
+        }
         return roteiroService.consultarTodos();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RoteiroResponseDTO> consultar(@PathVariable Long id) {
-        return roteiroService.consultar(id)
+    public ResponseEntity<RoteiroResponseDTO> consultarPorId(@PathVariable Long id) {
+        return roteiroService.consultarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Roteiro> atualizarRoteiro(@PathVariable Long id, @Valid @RequestBody Roteiro roteiro){
-        return roteiroService.atualizar(id, roteiro)
+    public ResponseEntity<RoteiroResponseDTO> atualizarRoteiro(
+            @PathVariable Long id,
+            @Valid @RequestBody RoteiroRequestDTO dto) {
+        return roteiroService.atualizarRoteiro(id, dto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
