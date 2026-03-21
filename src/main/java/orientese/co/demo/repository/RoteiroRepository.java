@@ -12,5 +12,7 @@ public interface RoteiroRepository extends JpaRepository<Roteiro, Long> {
     Optional<Roteiro> findByTitulo(String titulo);
     List<Roteiro> findByTituloContainingIgnoreCase(String titulo);
 
+    List<Roteiro> findByAtivoTrue();
+
     Long id(Long id);
 }

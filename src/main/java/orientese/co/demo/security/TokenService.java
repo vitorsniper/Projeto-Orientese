@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 
 @Service
 public class TokenService {
 
-    @Value("${api.security.token.secret}")
-    private String secret;
+    private final String secret = UUID.randomUUID().toString();
 
     public String gerarToken(Usuario usuario) {
         try {

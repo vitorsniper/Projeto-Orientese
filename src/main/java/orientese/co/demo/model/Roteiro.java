@@ -31,6 +31,8 @@ public class Roteiro {
     private String locutor;
     private String editorVideo;
     private String diretorArte;
+    @Column(name = "ativo")
+    private Boolean ativo = true;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "roteiro", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -84,7 +84,7 @@ public class RoteiroService {
     }
 
     public List<RoteiroResponseDTO> consultarTodos() {
-        return roteiroRepository.findAll().stream()
+        return roteiroRepository.findByAtivoTrue().stream()
                 .map(this::converterParaDTO)
                 .toList();
     }
@@ -97,6 +97,7 @@ public class RoteiroService {
     public List<RoteiroResponseDTO> consultarPorTitulo(String parteDoTitulo) {
         return roteiroRepository.findByTituloContainingIgnoreCase(parteDoTitulo)
                 .stream()
+                .filter(Roteiro::getAtivo)
                 .map(this::converterParaDTO).toList();
     }
 
@@ -116,12 +117,12 @@ public class RoteiroService {
         });
     }
 
-    public boolean excluir(Long idRoteiro) {
-        if (roteiroRepository.existsById(idRoteiro)) {
-            roteiroRepository.deleteById(idRoteiro);
+    public boolean desativarRoteiro(Long idRoteiro) {
+        return roteiroRepository.findById(idRoteiro).map(roteiro -> {
+            roteiro.setAtivo(false);
+            roteiroRepository.save(roteiro);
             return true;
-        }
-        return false;
+        }).orElse(false);
     }
 
     public Optional<BlocoResponseDTO> incluiBloco(Long idRoteiro, BlocoRequestDTO blocoNovo) {
