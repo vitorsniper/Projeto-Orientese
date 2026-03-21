@@ -84,7 +84,7 @@ async function carregarGaleria() {
     const token = sessionStorage.getItem('token');
 
     try {
-        const resposta = await fetch('https://api-orientese-xyz.onrender.com/api/roteiros/', {
+        const resposta = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -157,7 +157,7 @@ async function efetuarLogin(evento){
     const inputSenha = document.getElementById('input-senha').value;
 
     try {
-        const resposta = await fetch('https://api-orientese-xyz.onrender.com/api/login', {
+        const resposta = await fetch(`${window.CONFIG.API_BASE_URL}/api/login`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({login: inputLogin, senha: inputSenha})
@@ -171,11 +171,12 @@ async function efetuarLogin(evento){
             alert("Login bem-sucedido!");
             window.location.href = 'index.html';
         } else {
-            alert("Login falhou. Verifique suas credenciais.");
+            const erroDados = await resposta.json().catch(() => ({}));
+            alert(`Login falhou: ${erroDados.error || 'Verifique suas credenciais'}`);
         }
     } catch (erro) {
         console.error("Erro na comunicação com o servidor:", erro);
-        alert("Erro de conexão com o servidor.");
+        alert("Erro de conexão com o servidor: " + erro.message);
     }
 }
 
@@ -190,7 +191,7 @@ async function carregarDetalhes(id) {
     const token = sessionStorage.getItem('token');
 
     try {
-        const resposta = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${id}`, {
+        const resposta = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/${id}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -271,7 +272,7 @@ async function carregarDetalhes(id) {
                 const novaOrdemIds = Array.from(linhas).map(linha => Number(linha.getAttribute('data-id')));
 
                 try {
-                    const res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${id}/blocos/reordenar`, {
+                    const res = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/${id}/blocos/reordenar`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                         body: JSON.stringify(novaOrdemIds)
@@ -325,7 +326,7 @@ async function configurarFormularioBloco(idRoteiro) {
             let res;
 
             if (idBlocoEmEdicao) {
-                res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${idRoteiro}/blocos/${idBlocoEmEdicao}`, {
+                res = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/${idRoteiro}/blocos/${idBlocoEmEdicao}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
@@ -333,7 +334,7 @@ async function configurarFormularioBloco(idRoteiro) {
 
                 verificarSessaoExpirada(res);
             } else {
-                res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${idRoteiro}`, {
+                res = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/${idRoteiro}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
@@ -369,7 +370,7 @@ async function excluirBloco(idBloco){
 
     if(confirm("Tem certeza que deseja excluir este bloco?")) {
         try {
-            const res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${idRoteiro}/blocos/${idBloco}`, {
+            const res = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/${idRoteiro}/blocos/${idBloco}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -397,7 +398,7 @@ async function criarRoteiro(evento) {
     const token = sessionStorage.getItem('token');
 
     try {
-        const res = await fetch('https://api-orientese-xyz.onrender.com/api/roteiros/', {
+        const res = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
             body: JSON.stringify({ titulo: titulo })
@@ -440,7 +441,7 @@ function abrirModalEdicao(idBloco) {
 async function deletarRoteiro(id) {
     const token = sessionStorage.getItem('token');
     try {
-        const res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${id}`, {
+        const res = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -512,7 +513,7 @@ function configurarFormulario() {
         };
 
         try {
-            const resposta = await fetch('https://api-orientese-xyz.onrender.com/api/roteiros/', {
+            const resposta = await fetch(`${window.CONFIG.API_BASE_URL}/api/roteiros/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
