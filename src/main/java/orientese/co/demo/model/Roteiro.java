@@ -34,6 +34,7 @@ public class Roteiro {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "roteiro", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordem ASC")
     private List<Bloco> blocos;
 
 }

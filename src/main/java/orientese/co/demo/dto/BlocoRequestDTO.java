@@ -3,8 +3,7 @@ package orientese.co.demo.dto;
 public record BlocoRequestDTO(
         String tituloBloco,
         String direcaoVisual,
-        String tempoInicio,
-        String tempoFim,
+        Integer duracaoEmSegundos,
         String conteudo,
         Integer ordem
 ) {}
