@@ -10,7 +10,6 @@ import orientese.co.demo.dto.RoteiroRequestDTO;
 import orientese.co.demo.dto.RoteiroResponseDTO;
 import orientese.co.demo.service.RoteiroService;
 
-import java.util.Optional;
 import java.util.logging.Logger;
 
 import java.util.List;
@@ -98,8 +97,8 @@ public class RoteiroController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletaRoteiro(@PathVariable Long id) {
-        if (roteiroService.excluir(id)) {
+    public ResponseEntity<Void> desativaRoteiro(@PathVariable Long id) {
+        if (roteiroService.desativarRoteiro(id)) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();

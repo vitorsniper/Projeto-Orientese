@@ -1,15 +1,19 @@
 let idBlocoEmEdicao = null;
 let roteiroAtual = null;
+let quill;
+let cronometroInatividade;
 
 // --- INICIALIZAÇÃO ---
 async function iniciar() {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const caminho = window.location.pathname;
 
     if (!token && !caminho.includes('login.html')) {
         window.location.href = 'login.html';
         return;
     }
+
+    configurarLogoutAutomatico();
 
     const urlParams = new URLSearchParams(window.location.search);
     const idRoteiro = urlParams.get('id');
@@ -20,9 +24,56 @@ async function iniciar() {
         if (idRoteiro) {
             await carregarDetalhes(idRoteiro);
             await configurarFormularioBloco(idRoteiro);
+            inicializarQuill();
         }
     } else if (caminho.includes('index.html') || caminho === '/') {
         await carregarGaleria();
+    }
+}
+
+function inicializarQuill() {
+    const container = document.getElementById('editor-quill');
+    if (container) {
+        quill = new Quill('#editor-quill', {
+            theme: 'snow',
+            placeholder: 'Escreva a locução aqui. Selecione um trecho e clique no ícone de Link para atrelar um asset...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+    }
+}
+
+function fazerLogout() {
+    sessionStorage.removeItem('token');
+    window.location.href = 'login.html';
+}
+
+function verificarSessaoExpirada(resposta) {
+    if (resposta.status === 401 || resposta.status === 403) {
+        alert("A sua sessão expirou por segurança. Por favor, entre novamente.");
+
+        throw new Error("Sessão expirada");
+    }
+}
+
+function resetarCronometro() {
+    clearTimeout(cronometroInatividade);
+    cronometroInatividade = setTimeout(fazerLogout, 600000);
+}
+
+function configurarLogoutAutomatico() {
+    if (!window.location.pathname.includes('login.html')) {
+        window.onload = resetarCronometro;
+        document.onmousemove = resetarCronometro;
+        document.onkeypress = resetarCronometro;
+        document.onclick = resetarCronometro;
+        document.onscroll = resetarCronometro;
+        resetarCronometro();
     }
 }
 
@@ -30,13 +81,15 @@ async function carregarGaleria() {
     const container = document.getElementById('container-cards');
     if (!container) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     try {
         const resposta = await fetch('http://localhost:8080/api/roteiros/', {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
+
+        verificarSessaoExpirada(resposta);
 
         if (!resposta.ok) throw new Error("Erro ao buscar roteiros");
 
@@ -110,9 +163,11 @@ async function efetuarLogin(evento){
             body: JSON.stringify({login: inputLogin, senha: inputSenha})
         });
 
+        verificarSessaoExpirada(resposta);
+
         if (resposta.ok) {
             const dados = await resposta.json();
-            localStorage.setItem('token', dados.token);
+            sessionStorage.setItem('token', dados.token);
             alert("Login bem-sucedido!");
             window.location.href = 'index.html';
         } else {
@@ -132,7 +187,7 @@ async function carregarDetalhes(id) {
 
     if (!campoTitulo || !containerBlocos) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     try {
         const resposta = await fetch(`http://localhost:8080/api/roteiros/${id}`, {
@@ -141,6 +196,8 @@ async function carregarDetalhes(id) {
                 'Authorization': `Bearer ${token}`
             }
         });
+
+        verificarSessaoExpirada(resposta);
 
         if (!resposta.ok) throw new Error("Roteiro não encontrado");
 
@@ -170,7 +227,7 @@ async function carregarDetalhes(id) {
                         <span class="font-bold uppercase block">${bloco.tituloBloco || ''}</span>
                         <span class="text-xs text-slate-500">${bloco.direcaoVisual || ''}</span>
                     </td>
-                    <td class="py-4 px-2 text-slate-400 text-sm leading-relaxed">${bloco.conteudo}</td>
+                    <td class="py-4 px-2 text-slate-400 text-sm leading-relaxed conteudo-quill">${bloco.conteudo}</td>
                     
                     <td class="py-4 px-2 text-right font-mono text-xs text-pink-500 font-bold">
                         ${inicioFormatado} - ${fimFormatado}
@@ -220,6 +277,8 @@ async function carregarDetalhes(id) {
                         body: JSON.stringify(novaOrdemIds)
                     });
 
+                    verificarSessaoExpirada(res);
+
                     if (res.ok) {
                         await carregarDetalhes(id);
                     } else {
@@ -244,7 +303,7 @@ async function configurarFormularioBloco(idRoteiro) {
     const containerNovaBloco = document.getElementById('form-bloco');
     if (!containerNovaBloco) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     containerNovaBloco.addEventListener('submit', async (evento) => {
         evento.preventDefault();
@@ -253,7 +312,7 @@ async function configurarFormularioBloco(idRoteiro) {
         const duracaoEmSegundos = tempoParaSegundos(duracaoString);
         const direcaoVisual = document.getElementById('input-direcao').value;
         const tituloBloco = document.getElementById('input-titulo-bloco').value;
-        const conteudo = document.getElementById('input-conteudo').value;
+        const conteudo = quill.root.innerHTML;
 
         const novoBloco = {
             direcaoVisual: direcaoVisual,
@@ -271,12 +330,16 @@ async function configurarFormularioBloco(idRoteiro) {
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
                 });
+
+                verificarSessaoExpirada(res);
             } else {
                 res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
                 });
+
+                verificarSessaoExpirada(res);
             }
             if (res.ok) {
                 alert(idBlocoEmEdicao ? "Bloco atualizado com sucesso!" : "Bloco incluído com sucesso!");
@@ -302,7 +365,7 @@ async function excluirBloco(idBloco){
 
     if (!idRoteiro) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     if(confirm("Tem certeza que deseja excluir este bloco?")) {
         try {
@@ -312,6 +375,8 @@ async function excluirBloco(idBloco){
                     'Authorization': `Bearer ${token}`
                 }
             });
+
+            verificarSessaoExpirada(res);
 
             if(res.ok){
                 alert("Bloco excluído com sucesso!");
@@ -329,7 +394,7 @@ async function excluirBloco(idBloco){
 async function criarRoteiro(evento) {
     evento.preventDefault();
     const titulo = document.getElementById('input-titulo').value;
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     try {
         const res = await fetch('http://localhost:8080/api/roteiros/', {
@@ -337,6 +402,8 @@ async function criarRoteiro(evento) {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
             body: JSON.stringify({ titulo: titulo })
         });
+
+        verificarSessaoExpirada(res);
 
         if (res.ok) {
             const roteiroCriado = await res.json();
@@ -361,7 +428,7 @@ function abrirModalEdicao(idBloco) {
 
     document.getElementById('input-titulo-bloco').value = bloco.tituloBloco || '';
     document.getElementById('input-direcao').value = bloco.direcaoVisual || '';
-    document.getElementById('input-conteudo').value = bloco.conteudo || '';
+    quill.root.innerHTML = bloco.conteudo || '';
 
     document.getElementById('input-duracao').value = segundosParaTempo(bloco.duracaoEmSegundos);
 
@@ -371,7 +438,7 @@ function abrirModalEdicao(idBloco) {
 }
 
 async function deletarRoteiro(id) {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     try {
         const res = await fetch(`http://localhost:8080/api/roteiros/${id}`, {
             method: 'DELETE',
@@ -379,6 +446,9 @@ async function deletarRoteiro(id) {
                 'Authorization': `Bearer ${token}`
             }
         });
+
+        verificarSessaoExpirada(res);
+
         if (res.ok) await carregarGaleria();
     } catch (err) { console.error("Erro ao deletar:", err); }
 }
@@ -422,7 +492,7 @@ function configurarFormulario() {
     const form = document.getElementById('form-roteiro');
     if (!form) return;
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     form.addEventListener('submit', async (evento) => {
         evento.preventDefault();
@@ -450,6 +520,8 @@ function configurarFormulario() {
                 body: JSON.stringify(novoRoteiro)
             });
 
+            verificarSessaoExpirada(resposta);
+
             if (resposta.ok) {
                 alert("Roteiro salvo com sucesso! 🎬");
                 window.location.href = 'index.html';
@@ -472,6 +544,7 @@ function abrirModalBloco() {
 function fecharModalBloco() {
     document.getElementById('modal-bloco').classList.add('hidden');
     document.getElementById('form-bloco').reset();
+    if (quill) quill.root.innerHTML = '';
     idBlocoEmEdicao = null;
 }
 
