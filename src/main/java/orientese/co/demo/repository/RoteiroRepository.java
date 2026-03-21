@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface RoteiroRepository extends JpaRepository<Roteiro, Long> {
     Optional<Roteiro> findByTitulo(String titulo);
     List<Roteiro> findByTituloContainingIgnoreCase(String titulo);
+
+    Long id(Long id);
 }

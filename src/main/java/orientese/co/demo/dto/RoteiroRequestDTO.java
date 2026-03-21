@@ -8,8 +8,6 @@ public record RoteiroRequestDTO(
         @NotBlank(message = "O título é obrigatório")
         String titulo,
         String subtitulo,
-        @NotBlank(message = "A duração deve ser informada")
-        String duracaoEstimada,
         String roteirista,
         String locutor,
         String editorVideo,

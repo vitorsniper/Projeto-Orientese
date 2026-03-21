@@ -1,6 +1,8 @@
 package orientese.co.demo.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import orientese.co.demo.dto.BlocoRequestDTO;
 import orientese.co.demo.dto.BlocoResponseDTO;
 import orientese.co.demo.dto.RoteiroRequestDTO;
 import orientese.co.demo.dto.RoteiroResponseDTO;
@@ -9,8 +11,10 @@ import orientese.co.demo.model.Roteiro;
 import orientese.co.demo.repository.RoteiroRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.function.Function;
 
 @Service
 public class RoteiroService {
@@ -28,19 +32,19 @@ public class RoteiroService {
         Roteiro roteiro = new Roteiro();
         roteiro.setTitulo(dto.titulo());
         roteiro.setSubtitulo(dto.subtitulo());
-        roteiro.setDuracaoEstimada(dto.duracaoEstimada());
         roteiro.setRoteirista(dto.roteirista());
         roteiro.setLocutor(dto.locutor());
         roteiro.setEditorVideo(dto.editorVideo());
         roteiro.setDiretorArte(dto.diretorArte());
+
+        roteiro.setDuracaoEstimada("00:00");
 
         if (dto.blocos() != null) {
             List<Bloco> entidadesBlocos = dto.blocos().stream().map(blocoDto -> {
                 Bloco bloco = new Bloco();
                 bloco.setRoteiro(roteiro);
                 bloco.setTituloBloco(blocoDto.tituloBloco());
-                bloco.setTempoInicio(blocoDto.tempoInicio());
-                bloco.setTempoFim(blocoDto.tempoFim());
+                bloco.setDuracaoEmSegundos(blocoDto.duracaoEmSegundos());
                 bloco.setDirecaoVisual(blocoDto.direcaoVisual());
                 bloco.setConteudo(blocoDto.conteudo());
                 bloco.setOrdem(blocoDto.ordem());
@@ -50,7 +54,6 @@ public class RoteiroService {
             roteiro.setBlocos(entidadesBlocos);
         }
 
-        // 4. Salva (O CascadeType.ALL na Entity garante que os blocos vão junto)
         Roteiro salvo = roteiroRepository.save(roteiro);
 
         return converterParaDTO(salvo);
@@ -65,8 +68,7 @@ public class RoteiroService {
                             bloco.getId(),
                             bloco.getTituloBloco(),
                             bloco.getDirecaoVisual(),
-                            bloco.getTempoInicio(),
-                            bloco.getTempoFim(),
+                            bloco.getDuracaoEmSegundos(),
                             bloco.getConteudo(),
                             bloco.getOrdem()
                     ))
@@ -100,8 +102,13 @@ public class RoteiroService {
 
     public Optional<RoteiroResponseDTO> atualizarRoteiro(Long id, RoteiroRequestDTO dto) {
         return roteiroRepository.findById(id).map(roteiroExistente -> {
+
             roteiroExistente.setTitulo(dto.titulo());
-            roteiroExistente.setDuracaoEstimada(dto.duracaoEstimada());
+            roteiroExistente.setSubtitulo(dto.subtitulo());
+            roteiroExistente.setRoteirista(dto.roteirista());
+            roteiroExistente.setLocutor(dto.locutor());
+            roteiroExistente.setEditorVideo(dto.editorVideo());
+            roteiroExistente.setDiretorArte(dto.diretorArte());
 
             Roteiro atualizado = roteiroRepository.save(roteiroExistente);
 
@@ -115,5 +122,89 @@ public class RoteiroService {
             return true;
         }
         return false;
+    }
+
+    public Optional<BlocoResponseDTO> incluiBloco(Long idRoteiro, BlocoRequestDTO blocoNovo) {
+        return roteiroRepository.findById(idRoteiro).map(roteiroExistente -> {
+            int proximaOrdem = roteiroExistente.getBlocos().size() + 1;
+            Bloco bloco = new Bloco();
+            bloco.setOrdem(proximaOrdem);
+            bloco.setTituloBloco(blocoNovo.tituloBloco());
+            bloco.setDuracaoEmSegundos(blocoNovo.duracaoEmSegundos());
+            bloco.setDirecaoVisual(blocoNovo.direcaoVisual());
+            bloco.setConteudo(blocoNovo.conteudo());
+
+            bloco.setRoteiro(roteiroExistente);
+
+            roteiroExistente.getBlocos().add(bloco);
+
+            roteiroRepository.save(roteiroExistente);
+
+            return new BlocoResponseDTO(
+                    bloco.getId(),
+                    bloco.getTituloBloco(),
+                    bloco.getDirecaoVisual(),
+                    bloco.getDuracaoEmSegundos(),
+                    bloco.getConteudo(),
+                    bloco.getOrdem()
+            );
+        });
+    }
+
+    @Transactional
+    public boolean excluirBloco(Long idRoteiro, Long idBloco){
+        return roteiroRepository.findById(idRoteiro).map(roteiro -> {
+            boolean removed = roteiro.getBlocos().removeIf(bloco -> bloco.getId().equals(idBloco));
+            if (removed) {
+                var blocos = roteiro.getBlocos();
+                java.util.stream.IntStream.range(0, blocos.size())
+                    .forEach(i -> blocos.get(i).setOrdem(i + 1));
+                roteiroRepository.save(roteiro);
+            }
+            return removed;
+        }).orElse(false);
+    }
+
+    @Transactional
+    public boolean reordenarBlocos(Long idRoteiro, List<Long> idsNaNovaOrdem) {
+        return roteiroRepository.findById(idRoteiro).map(roteiro -> {
+            Map<Long, Bloco> blocosPorId = roteiro.getBlocos().stream()
+                    .collect(Collectors.toMap(Bloco::getId, Function.identity()));
+
+            java.util.stream.IntStream.range(0, idsNaNovaOrdem.size())
+                    .forEach(i -> {
+                        Bloco bloco = blocosPorId.get(idsNaNovaOrdem.get(i));
+                        if (bloco != null) {
+                            bloco.setOrdem(i + 1);
+                        }
+                    });
+
+            roteiroRepository.save(roteiro);
+            return true;
+        }).orElse(false);
+    }
+
+    @Transactional
+    public Optional<BlocoResponseDTO> atualizarBloco(Long idRoteiro, Long idBloco, BlocoRequestDTO blocoAtualizado) {
+        return roteiroRepository.findById(idRoteiro).flatMap(roteiro -> roteiro.getBlocos().stream()
+            .filter(bloco -> bloco.getId().equals(idBloco))
+            .findFirst()
+            .map(bloco -> {
+                bloco.setTituloBloco(blocoAtualizado.tituloBloco());
+                bloco.setDuracaoEmSegundos(blocoAtualizado.duracaoEmSegundos());
+                bloco.setDirecaoVisual(blocoAtualizado.direcaoVisual());
+                bloco.setConteudo(blocoAtualizado.conteudo());
+
+                roteiroRepository.save(roteiro);
+
+                return new BlocoResponseDTO(
+                    bloco.getId(),
+                    bloco.getTituloBloco(),
+                    bloco.getDirecaoVisual(),
+                    bloco.getDuracaoEmSegundos(),
+                    bloco.getConteudo(),
+                    bloco.getOrdem()
+                );
+            }));
     }
 }

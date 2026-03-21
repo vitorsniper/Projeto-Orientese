@@ -4,8 +4,7 @@ public record BlocoResponseDTO(
         Long id,
         String tituloBloco,
         String direcaoVisual,
-        String tempoInicio,
-        String tempoFim,
+        Integer duracaoEmSegundos,
         String conteudo,
         Integer ordem
 ) {}

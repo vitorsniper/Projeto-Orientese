@@ -18,8 +18,7 @@ public class Bloco {
     @JsonBackReference
     private Roteiro roteiro;
     private String tituloBloco;
-    private String tempoInicio;
-    private String tempoFim;
+    private Integer duracaoEmSegundos;
     @Lob
     private String direcaoVisual;
     @Lob

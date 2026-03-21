@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oriente-se | Detalhes do Roteiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+        }
+
+        .bg-dark-card {
+            background-color: #161b2a;
+        }
+        .pdf-canvas { padding: 20px; background-color: #0b0f19 !important; }
+    </style>
+</head>
+<body class="text-slate-100 antialiased">
+
+<div class="max-w-7xl mx-auto p-6 md:p-12">
+    <header class="mb-10 border-b border-white/10 pb-8 flex justify-between items-center">
+        <div>
+            <span class="text-pink-500 font-bold tracking-[0.3em] uppercase text-[10px]">Sistema Interno</span>
+            <h1 class="text-3xl font-black tracking-tighter uppercase italic text-white">
+                Canal <span class="text-pink-500">Oriente-se</span>
+            </h1>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="gerarPDF()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2">
+                📥 Baixar PDF
+            </button>
+            <a href="novo-roteiro.html">
+                <button class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
+                    + Novo Roteiro
+                </button>
+            </a>
+        </div>
+    </header>
+
+    <nav class="mb-8">
+        <a href="index.html" class="text-slate-500 hover:text-pink-500 transition-colors text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+            ← Voltar para a Galeria
+        </a>
+    </nav>
+
+    <main id="conteudo-roteiro" class="bg-dark-card rounded-2xl p-8 md:p-12 shadow-2xl border border-white/5">
+
+        <div class="mb-12">
+            <h2 id="titulo-roteiro" class="text-4xl md:text-5xl font-black tracking-tighter uppercase text-white mb-4">
+                Carregando...
+            </h2>
+            <div class="flex items-center gap-6">
+                <div>
+                    <p class="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1">Duração Estimada</p>
+                    <p id="duracao-roteiro" class="text-2xl font-mono text-pink-500 font-bold">--:--</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-end mb-4 mt-12">
+            <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest">Blocos de Bloco</h3>
+            <button onclick="abrirModalBloco()" class="bg-pink-600 hover:bg-pink-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2">
+                + Nova Bloco
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="text-slate-500 uppercase text-[10px] tracking-[0.2em] border-b border-white/10">
+                    <th class="py-4 px-2 w-12">#</th>
+                    <th class="py-4 px-2">Ator/Bloco</th>
+                    <th class="py-4 px-2">Texto/Descrição</th>
+                    <th class="py-4 px-2 text-right">Tempo</th>
+                    <th class="py-4 px-2 w-24 text-right coluna-acoes"></th>
+                </tr>
+                </thead>
+                <tbody id="container-blocos" class="divide-y divide-white/5">
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<script src="js/app.js"></script>
+<div id="modal-bloco" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex justify-center items-center z-50">
+    <div class="bg-dark-card border border-white/10 rounded-2xl p-8 w-full max-w-2xl shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black italic uppercase text-white">Adicionar <span class="text-pink-500">Bloco</span></h3>
+            <button onclick="fecharModalBloco()" class="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button>
+        </div>
+
+        <form id="form-bloco" class="flex flex-col gap-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Duração (Min:Seg)</label>
+                    <input type="text" id="input-duracao" placeholder="Ex: 01:30" class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-3 text-white font-mono text-sm focus:border-pink-500 outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Título do Bloco</label>
+                    <input type="text" id="input-titulo-bloco" class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-3 text-white text-sm focus:border-pink-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Direção Visual</label>
+                    <input type="text" id="input-direcao" placeholder="Ex: Imagem do mapa" class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-3 text-white text-sm focus:border-pink-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Conteúdo (Texto)</label>
+                <textarea id="input-conteudo" rows="4" required class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-3 text-slate-300 text-sm focus:border-pink-500 outline-none resize-none"></textarea>
+            </div>
+
+            <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-lg mt-2 tracking-widest uppercase text-sm transition-all shadow-lg shadow-pink-600/20">
+                Salvar Bloco
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
