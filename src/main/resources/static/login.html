@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oriente-se | Acesso Restrito</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; }
+        .bg-dark-card { background-color: #161b2a; }
+    </style>
+</head>
+<body class="text-slate-100 antialiased h-screen flex items-center justify-center">
+
+<div class="w-full max-w-md p-6">
+    <div class="text-center mb-10">
+        <span class="text-pink-500 font-bold tracking-[0.3em] uppercase text-[10px] block mb-2">Sistema Interno</span>
+        <h1 class="text-4xl font-black tracking-tighter uppercase italic text-white">
+            Oriente-<span class="text-pink-500">se</span>
+        </h1>
+    </div>
+
+    <form id="form-login" onsubmit="efetuarLogin(event)" class="bg-dark-card rounded-2xl p-8 shadow-2xl border border-white/5 flex flex-col gap-6">
+
+        <div>
+            <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Utilizador</label>
+            <input type="text" id="input-login" placeholder="Ex: vitor" required
+                   class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-4 text-white font-bold focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all">
+        </div>
+
+        <div>
+            <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Palavra-passe</label>
+            <input type="password" id="input-senha" placeholder="••••••••" required
+                   class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-4 text-white font-bold focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all">
+        </div>
+
+        <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-4 rounded-lg mt-4 tracking-widest uppercase transition-all shadow-lg shadow-pink-600/20">
+            Entrar 🔑
+        </button>
+
+        <p id="mensagem-erro" class="text-red-500 text-sm text-center font-bold hidden">
+            Utilizador ou palavra-passe incorretos.
+        </p>
+    </form>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -3,59 +3,124 @@ let roteiroAtual = null;
 
 // --- INICIALIZAÇÃO ---
 async function iniciar() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const idRoteiro = urlParams.get('id');
+    const token = localStorage.getItem('token');
     const caminho = window.location.pathname;
 
-    // 1º: Verifica SE é a página de NOVO roteiro primeiro!
-    if (caminho.includes('novo-roteiro.html')) {
-        console.log("Tela de novo roteiro detectada!");
-        configurarFormulario();
+    if (!token && !caminho.includes('login.html')) {
+        window.location.href = 'login.html';
+        return;
     }
-    // 2º: Se não for novo, verifica se é a página de DETALHES
-    else if (caminho.includes('roteiro.html')) {
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const idRoteiro = urlParams.get('id');
+
+    if (caminho.includes('novo-roteiro.html')) {
+        configurarFormulario();
+    } else if (caminho.includes('roteiro.html')) {
         if (idRoteiro) {
             await carregarDetalhes(idRoteiro);
             await configurarFormularioBloco(idRoteiro);
-        } else {
-            console.warn("Atenção: A página foi aberta sem um ?id= na URL.");
         }
-    }
-    // 3º: Se não for nenhuma das duas, é a página PRINCIPAL (index)
-    else {
-        await carregarLista();
+    } else if (caminho.includes('index.html') || caminho === '/') {
+        await carregarGaleria();
     }
 }
 
-// --- LÓGICA DA LISTAGEM (index.html) ---
-async function carregarLista() {
+async function carregarGaleria() {
     const container = document.getElementById('container-cards');
     if (!container) return;
 
+    const token = localStorage.getItem('token');
+
     try {
-        const resposta = await fetch('http://localhost:8080/api/roteiros/');
-        const dados = await resposta.json();
-
-        container.innerHTML = "";
-
-        dados.forEach(roteiro => {
-            const cardHtml = `
-                <div class="script-card bg-dark-card p-6 rounded-xl border-l-4 border-pink-500 hover:scale-105 transition-transform cursor-pointer relative group" 
-                    data-id="${roteiro.id}"> 
-                    <h2 class="text-2xl font-black tracking-tighter uppercase text-slate-100 mb-2">${roteiro.titulo}</h2>
-                    <p class="text-pink-400 font-mono text-sm">${roteiro.duracaoEstimada}</p>
-                    
-                    <button class="btn-delete absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-500 transition-all">
-                        🗑️
-                    </button>
-                </div>
-            `;
-            container.innerHTML += cardHtml;
+        const resposta = await fetch('http://localhost:8080/api/roteiros/', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        configurarCliques();
+        if (!resposta.ok) throw new Error("Erro ao buscar roteiros");
+
+        const roteiros = await resposta.json();
+        container.innerHTML = '';
+
+        if (roteiros.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-slate-500 italic mb-4">Nenhum roteiro encontrado.</p>
+                    <a href="novo-roteiro.html" class="text-pink-500 hover:text-pink-400 font-bold uppercase tracking-widest text-sm transition-colors">
+                        + Criar o primeiro roteiro
+                    </a>
+                </div>`;
+            return;
+        }
+
+        roteiros.forEach(roteiro => {
+            const totalSegundos = (roteiro.blocos || []).reduce((soma, b) => soma + (b.duracaoEmSegundos || 0), 0);
+            const tempoFormatado = segundosParaTempo(totalSegundos);
+
+            const card = `
+                <div onclick="window.location.href='roteiro.html?id=${roteiro.id}'" 
+                     class="relative block bg-[#161b2a] border border-white/5 rounded-2xl p-6 hover:border-pink-500 hover:shadow-[0_0_30px_rgba(236,72,153,0.1)] transition-all group cursor-pointer">
+                    
+                    <button onclick="event.stopPropagation(); deletarRoteiro(${roteiro.id})" 
+                            class="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-500 transition-all p-2"
+                            title="Excluir Roteiro">
+                        🗑️
+                    </button>
+
+                    <h3 class="text-xl font-bold text-white group-hover:text-pink-500 transition-colors mb-6 line-clamp-2">
+                        ${roteiro.titulo}
+                    </h3>
+                    
+                    <div class="flex items-center gap-6 pt-6 border-t border-white/5">
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1">Duração</p>
+                            <p class="text-lg font-mono text-slate-300 font-bold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                ${tempoFormatado}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1">Cenas</p>
+                            <p class="text-lg font-mono text-slate-300 font-bold">${(roteiro.blocos || []).length}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+
     } catch (erro) {
-        console.error("Erro ao buscar lista:", erro);
+        console.error("Erro na galeria:", erro);
+        container.innerHTML = '<p class="text-red-500 col-span-full">Erro ao conectar com o servidor.</p>';
+    }
+}
+
+async function efetuarLogin(evento){
+    evento.preventDefault();
+    const inputLogin = document.getElementById('input-login').value;
+    const inputSenha = document.getElementById('input-senha').value;
+
+    try {
+        const resposta = await fetch('http://localhost:8080/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({login: inputLogin, senha: inputSenha})
+        });
+
+        if (resposta.ok) {
+            const dados = await resposta.json();
+            localStorage.setItem('token', dados.token);
+            alert("Login bem-sucedido!");
+            window.location.href = 'index.html';
+        } else {
+            alert("Login falhou. Verifique suas credenciais.");
+        }
+    } catch (erro) {
+        console.error("Erro na comunicação com o servidor:", erro);
+        alert("Erro de conexão com o servidor.");
     }
 }
 
@@ -67,8 +132,15 @@ async function carregarDetalhes(id) {
 
     if (!campoTitulo || !containerBlocos) return;
 
+    const token = localStorage.getItem('token');
+
     try {
-        const resposta = await fetch(`http://localhost:8080/api/roteiros/${id}`);
+        const resposta = await fetch(`http://localhost:8080/api/roteiros/${id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
         if (!resposta.ok) throw new Error("Roteiro não encontrado");
 
@@ -77,12 +149,16 @@ async function carregarDetalhes(id) {
 
         campoTitulo.innerText = roteiro.titulo;
 
-        roteiro.blocos.sort((a, b) => a.ordem - b.ordem);
+        if (!roteiro.blocos || roteiro.blocos.length === 0) {
+            containerBlocos.innerHTML = '';
+            if (campoDuracao) campoDuracao.innerText = "00:00";
+        } else {
+            roteiro.blocos.sort((a, b) => a.ordem - b.ordem);
 
-        containerBlocos.innerHTML = "";
-        let tempoAcumulado = 0;
+            containerBlocos.innerHTML = "";
+            let tempoAcumulado = 0;
 
-        roteiro.blocos.forEach(bloco => {
+            roteiro.blocos.forEach(bloco => {
             const inicioFormatado = segundosParaTempo(tempoAcumulado);
             tempoAcumulado += (bloco.duracaoEmSegundos || 0);
             const fimFormatado = segundosParaTempo(tempoAcumulado);
@@ -140,12 +216,12 @@ async function carregarDetalhes(id) {
                 try {
                     const res = await fetch(`http://localhost:8080/api/roteiros/${id}/blocos/reordenar`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                         body: JSON.stringify(novaOrdemIds)
                     });
 
                     if (res.ok) {
-                        await carregarDetalhes(id); // O recarregamento vai re-calcular todos os tempos magicamente! ✨
+                        await carregarDetalhes(id);
                     } else {
                         throw new Error("Falha ao salvar a nova ordem");
                     }
@@ -156,6 +232,7 @@ async function carregarDetalhes(id) {
                 }
             }
         });
+        }
 
     } catch (erro) {
         console.error("Erro ao carregar detalhes:", erro);
@@ -166,6 +243,8 @@ async function carregarDetalhes(id) {
 async function configurarFormularioBloco(idRoteiro) {
     const containerNovaBloco = document.getElementById('form-bloco');
     if (!containerNovaBloco) return;
+
+    const token = localStorage.getItem('token');
 
     containerNovaBloco.addEventListener('submit', async (evento) => {
         evento.preventDefault();
@@ -189,13 +268,13 @@ async function configurarFormularioBloco(idRoteiro) {
             if (idBlocoEmEdicao) {
                 res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}/blocos/${idBlocoEmEdicao}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
                 });
             } else {
                 res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
                 });
             }
@@ -223,9 +302,16 @@ async function excluirBloco(idBloco){
 
     if (!idRoteiro) return;
 
+    const token = localStorage.getItem('token');
+
     if(confirm("Tem certeza que deseja excluir este bloco?")) {
         try {
-            const res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}/blocos/${idBloco}`, { method: 'DELETE' });
+            const res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}/blocos/${idBloco}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
             if(res.ok){
                 alert("Bloco excluído com sucesso!");
@@ -240,89 +326,15 @@ async function excluirBloco(idBloco){
     }
 }
 
-async function carregarRoteiros() {
-    const containerCards = document.getElementById('container-cards');
-    if (!containerCards) return;
-
-    try {
-        const resposta = await fetch('http://localhost:8080/api/roteiros/');
-
-        if (!resposta.ok) throw new Error("Erro ao buscar roteiros");
-
-        const roteiros = await resposta.json();
-
-        containerCards.innerHTML = '';
-
-        if (roteiros.length === 0) {
-            containerCards.innerHTML = `
-                <div class="col-span-full text-center py-12">
-                    <p class="text-slate-500 italic mb-4">Nenhum roteiro encontrado.</p>
-                    <a href="novo-roteiro.html" class="text-pink-500 hover:text-pink-400 font-bold uppercase tracking-widest text-sm transition-colors">
-                        + Criar o primeiro roteiro
-                    </a>
-                </div>`;
-            return;
-        }
-
-        roteiros.forEach(roteiro => {
-            let totalSegundos = 0;
-            let quantidadeBlocos = 0;
-
-            if (roteiro.blocos && roteiro.blocos.length > 0) {
-                quantidadeBlocos = roteiro.blocos.length;
-
-                totalSegundos = roteiro.blocos.reduce((soma, bloco) => {
-                    return soma + (bloco.duracaoEmSegundos || 0);
-                }, 0);
-            }
-
-            const tempoFormatado = segundosParaTempo(totalSegundos);
-
-            const card = `
-                <a href="roteiro.html?id=${roteiro.id}" class="block bg-[#161b2a] border border-white/5 rounded-2xl p-6 hover:border-pink-500 hover:shadow-[0_0_30px_rgba(236,72,153,0.1)] transition-all group">
-                    <h3 class="text-xl font-bold text-white group-hover:text-pink-500 transition-colors mb-6 line-clamp-2">
-                        ${roteiro.titulo}
-                    </h3>
-                    
-                    <div class="flex items-center gap-6 pt-6 border-t border-white/5">
-                        <div>
-                            <p class="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1">Duração</p>
-                            <p class="text-lg font-mono text-slate-300 font-bold flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                ${tempoFormatado}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1">Cenas</p>
-                            <p class="text-lg font-mono text-slate-300 font-bold">${quantidadeBlocos}</p>
-                        </div>
-                    </div>
-                </a>
-            `;
-            containerCards.innerHTML += card;
-        });
-
-    } catch (erro) {
-        console.error("Erro ao carregar a galeria:", erro);
-        containerCards.innerHTML = '<p class="text-red-500 col-span-full">Erro ao conectar com o servidor. Verifique se o backend está rodando.</p>';
-    }
-}
-
-// Inicializador automático: Quando o HTML terminar de carregar, ele roda a função sozinho
-document.addEventListener('DOMContentLoaded', () => {
-    carregarRoteiros();
-});
-
 async function criarRoteiro(evento) {
     evento.preventDefault();
     const titulo = document.getElementById('input-titulo').value;
+    const token = localStorage.getItem('token');
 
     try {
         const res = await fetch('http://localhost:8080/api/roteiros/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
             body: JSON.stringify({ titulo: titulo })
         });
 
@@ -358,35 +370,16 @@ function abrirModalEdicao(idBloco) {
     document.getElementById('modal-bloco').classList.remove('hidden');
 }
 
-
-
-// --- FUNÇÕES AUXILIARES ---
-
-function configurarCliques() {
-    // Clique no Card para abrir detalhes
-    document.querySelectorAll('.script-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const id = card.getAttribute('data-id');
-            window.location.href = `roteiro.html?id=${id}`;
-        });
-    });
-
-    // Clique na lixeira para deletar
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation(); // Impede de abrir o roteiro ao clicar na lixeira
-            const id = btn.closest('.script-card').getAttribute('data-id');
-            if (confirm("Deseja excluir este roteiro?")) {
-                await deletarRoteiro(id);
+async function deletarRoteiro(id) {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`http://localhost:8080/api/roteiros/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
         });
-    });
-}
-
-async function deletarRoteiro(id) {
-    try {
-        const res = await fetch(`http://localhost:8080/api/roteiros/${id}`, { method: 'DELETE' });
-        if (res.ok) carregarLista();
+        if (res.ok) await carregarGaleria();
     } catch (err) { console.error("Erro ao deletar:", err); }
 }
 
@@ -429,15 +422,14 @@ function configurarFormulario() {
     const form = document.getElementById('form-roteiro');
     if (!form) return;
 
+    const token = localStorage.getItem('token');
+
     form.addEventListener('submit', async (evento) => {
-        // IMPORTANTE: Impede que a página recarregue ao clicar em enviar
         evento.preventDefault();
 
-        // Captura os valores digitados
         const tituloDigitado = document.getElementById('input-titulo').value;
         const duracaoDigitada = document.getElementById('input-duracao').value;
 
-        // Monta o "pacote" JSON exatamente como o Spring Boot espera
         const novoRoteiro = {
             titulo: tituloDigitado,
             subtitulo: "",
@@ -446,15 +438,14 @@ function configurarFormulario() {
             locutor: "",
             editorVideo: "",
             diretorArte: "",
-            blocos: [] // Começamos com a lista de blocos vazia
+            blocos: []
         };
 
         try {
-            // Dispara o POST
             const resposta = await fetch('http://localhost:8080/api/roteiros/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(novoRoteiro)
             });
@@ -472,6 +463,9 @@ function configurarFormulario() {
 }
 
 function abrirModalBloco() {
+    document.getElementById('form-bloco').reset();
+    idBlocoEmEdicao = null;
+    document.querySelector('#modal-bloco h3').innerHTML = 'Novo <span class="text-pink-500">Bloco</span>';
     document.getElementById('modal-bloco').classList.remove('hidden');
 }
 
@@ -479,7 +473,6 @@ function fecharModalBloco() {
     document.getElementById('modal-bloco').classList.add('hidden');
     document.getElementById('form-bloco').reset();
     idBlocoEmEdicao = null;
-    document.getElementById('form-bloco').reset();
 }
 
 function tempoParaSegundos(tempoString) {
