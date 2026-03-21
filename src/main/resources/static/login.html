@@ -21,6 +21,11 @@
         </h1>
     </div>
 
+    <!-- Indicador de API -->
+    <div id="api-status" class="mb-6 p-3 rounded-lg border text-xs text-center font-mono bg-blue-500/10 border-blue-500/30 text-blue-300">
+        📡 API: <span id="api-url-display">Carregando...</span>
+    </div>
+
     <form id="form-login" onsubmit="efetuarLogin(event)" class="bg-dark-card rounded-2xl p-8 shadow-2xl border border-white/5 flex flex-col gap-6">
 
         <div>
@@ -43,9 +48,49 @@
             Utilizador ou palavra-passe incorretos.
         </p>
     </form>
+
+    <!-- Seletor de API (para desenvolvimento) -->
+    <div class="mt-6 pt-6 border-t border-white/10">
+        <details class="text-xs text-slate-500">
+            <summary class="cursor-pointer hover:text-slate-400 font-bold uppercase tracking-widest">
+                ⚙️ Configurações Avançadas
+            </summary>
+            <div class="mt-4 space-y-3">
+                <div>
+                    <label class="block text-slate-400 text-xs font-bold uppercase mb-2">Selecionar API:</label>
+                    <select id="api-select" class="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-2 text-white text-xs">
+                        <option value="https://api-orientese.onrender.com">🌐 Render (Produção)</option>
+                        <option value="http://localhost:8080">💻 Local (Desenvolvimento)</option>
+                    </select>
+                </div>
+                <button type="button" onclick="atualizarAPI()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded transition-all">
+                    Aplicar
+                </button>
+                <button type="button" onclick="resetarAPI()" class="w-full bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold py-2 rounded transition-all">
+                    Resetar
+                </button>
+            </div>
+        </details>
+    </div>
 </div>
 
 <script src="js/config.js"></script>
+<script>
+    // Atualizar display da API
+    document.getElementById('api-url-display').textContent = window.CONFIG.API_BASE_URL;
+    document.getElementById('api-select').value = window.CONFIG.API_BASE_URL;
+
+    function atualizarAPI() {
+        const novaUrl = document.getElementById('api-select').value;
+        window.CONFIG.setApiUrl(novaUrl);
+        document.getElementById('api-url-display').textContent = novaUrl;
+        alert(`✅ API alterada para: ${novaUrl}`);
+    }
+
+    function resetarAPI() {
+        window.CONFIG.resetApiUrl();
+    }
+</script>
 <script src="js/app.js"></script>
 </body>
 </html>
