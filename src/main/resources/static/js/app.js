@@ -84,7 +84,7 @@ async function carregarGaleria() {
     const token = sessionStorage.getItem('token');
 
     try {
-        const resposta = await fetch('http://localhost:8080/api/roteiros/', {
+        const resposta = await fetch('https://api-orientese-xyz.onrender.com/api/roteiros/', {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -129,7 +129,7 @@ async function carregarGaleria() {
                         <div>
                             <p class="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-1">Duração</p>
                             <p class="text-lg font-mono text-slate-300 font-bold flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="https://www.w3.org/2000/svg" class="h-4 w-4 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 ${tempoFormatado}
@@ -157,7 +157,7 @@ async function efetuarLogin(evento){
     const inputSenha = document.getElementById('input-senha').value;
 
     try {
-        const resposta = await fetch('http://localhost:8080/api/login', {
+        const resposta = await fetch('https://api-orientese-xyz.onrender.com/api/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({login: inputLogin, senha: inputSenha})
@@ -190,7 +190,7 @@ async function carregarDetalhes(id) {
     const token = sessionStorage.getItem('token');
 
     try {
-        const resposta = await fetch(`http://localhost:8080/api/roteiros/${id}`, {
+        const resposta = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${id}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -238,7 +238,7 @@ async function carregarDetalhes(id) {
                             <button onclick="abrirModalEdicao(${bloco.id})" 
                                      class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-blue-500 transition-all p-1 flex items-center gap-1" 
                                      title="Editar Bloco">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="https://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                                 <span class="text-xs font-bold">Editar</span>
@@ -246,7 +246,7 @@ async function carregarDetalhes(id) {
                             <button onclick="excluirBloco(${bloco.id})" 
                                     class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-500 transition-all p-1 flex items-center gap-1"
                                     title="Excluir Bloco">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="https://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                                 <span class="text-xs font-bold">Excluir</span>
@@ -271,7 +271,7 @@ async function carregarDetalhes(id) {
                 const novaOrdemIds = Array.from(linhas).map(linha => Number(linha.getAttribute('data-id')));
 
                 try {
-                    const res = await fetch(`http://localhost:8080/api/roteiros/${id}/blocos/reordenar`, {
+                    const res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${id}/blocos/reordenar`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                         body: JSON.stringify(novaOrdemIds)
@@ -325,7 +325,7 @@ async function configurarFormularioBloco(idRoteiro) {
             let res;
 
             if (idBlocoEmEdicao) {
-                res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}/blocos/${idBlocoEmEdicao}`, {
+                res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${idRoteiro}/blocos/${idBlocoEmEdicao}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
@@ -333,7 +333,7 @@ async function configurarFormularioBloco(idRoteiro) {
 
                 verificarSessaoExpirada(res);
             } else {
-                res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}`, {
+                res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${idRoteiro}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
                     body: JSON.stringify(novoBloco)
@@ -369,7 +369,7 @@ async function excluirBloco(idBloco){
 
     if(confirm("Tem certeza que deseja excluir este bloco?")) {
         try {
-            const res = await fetch(`http://localhost:8080/api/roteiros/${idRoteiro}/blocos/${idBloco}`, {
+            const res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${idRoteiro}/blocos/${idBloco}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -397,7 +397,7 @@ async function criarRoteiro(evento) {
     const token = sessionStorage.getItem('token');
 
     try {
-        const res = await fetch('http://localhost:8080/api/roteiros/', {
+        const res = await fetch('https://api-orientese-xyz.onrender.com/api/roteiros/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
             body: JSON.stringify({ titulo: titulo })
@@ -440,7 +440,7 @@ function abrirModalEdicao(idBloco) {
 async function deletarRoteiro(id) {
     const token = sessionStorage.getItem('token');
     try {
-        const res = await fetch(`http://localhost:8080/api/roteiros/${id}`, {
+        const res = await fetch(`https://api-orientese-xyz.onrender.com/api/roteiros/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -512,7 +512,7 @@ function configurarFormulario() {
         };
 
         try {
-            const resposta = await fetch('http://localhost:8080/api/roteiros/', {
+            const resposta = await fetch('https://api-orientese-xyz.onrender.com/api/roteiros/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
