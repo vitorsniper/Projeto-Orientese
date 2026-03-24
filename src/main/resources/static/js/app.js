@@ -465,7 +465,7 @@ async function gerarPDF() {
 
     const opcoes = {
         margin:       [15, 15, 15, 15],
-        filename:     `Oriente-se_${titulo.replace(/\s+/g, '_')}.pdf`,
+        filename:     `Oriente.se_${titulo.replace(/\s+/g, '_')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#161b2a' },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
