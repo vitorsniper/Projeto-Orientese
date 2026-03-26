@@ -1,4 +1,4 @@
-package orientese.co.demo.controller;
+package orientese.co.api.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

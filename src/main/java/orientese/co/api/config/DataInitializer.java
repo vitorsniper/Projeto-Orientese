@@ -1,7 +1,7 @@
-package orientese.co.demo.config;
+package orientese.co.api.config;
 
-import orientese.co.demo.security.Usuario;
-import orientese.co.demo.security.UsuarioRepository;
+import orientese.co.api.security.Usuario;
+import orientese.co.api.security.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;

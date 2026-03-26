@@ -1,8 +1,8 @@
-package orientese.co.demo.repository;
+package orientese.co.api.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import orientese.co.demo.model.Roteiro;
+import orientese.co.api.model.Roteiro;
 
 import java.util.List;
 import java.util.Optional;

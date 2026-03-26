@@ -1,4 +1,4 @@
-package orientese.co.demo.model;
+package orientese.co.api.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;

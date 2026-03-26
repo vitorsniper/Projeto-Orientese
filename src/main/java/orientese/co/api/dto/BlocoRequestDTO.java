@@ -1,4 +1,4 @@
-package orientese.co.demo.dto;
+package orientese.co.api.dto;
 
 public record BlocoRequestDTO(
         String tituloBloco,

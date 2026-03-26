@@ -1,8 +1,8 @@
-package orientese.co.demo.controller;
+package orientese.co.api.controller;
 
-import orientese.co.demo.security.TokenService;
-import orientese.co.demo.security.Usuario;
-import orientese.co.demo.security.UsuarioRepository;
+import orientese.co.api.security.TokenService;
+import orientese.co.api.security.Usuario;
+import orientese.co.api.security.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

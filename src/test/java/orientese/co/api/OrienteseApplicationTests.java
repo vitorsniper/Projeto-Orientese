@@ -1,10 +1,10 @@
-package orientese.co.demo;
+package orientese.co.api;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DemoApplicationTests {
+class OrienteseApplicationTests {
 
 	@Test
 	void contextLoads() {

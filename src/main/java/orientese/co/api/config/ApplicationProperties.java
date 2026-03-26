@@ -1,4 +1,4 @@
-package orientese.co.demo.config;
+package orientese.co.api.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

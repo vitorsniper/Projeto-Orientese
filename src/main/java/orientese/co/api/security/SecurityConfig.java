@@ -1,4 +1,4 @@
-package orientese.co.demo.security;
+package orientese.co.api.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package orientese.co.demo.security;
+package orientese.co.api.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
