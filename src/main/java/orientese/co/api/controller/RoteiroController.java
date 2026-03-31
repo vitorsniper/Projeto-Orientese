@@ -1,14 +1,11 @@
-package orientese.co.demo.controller;
+package orientese.co.api.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import orientese.co.demo.dto.BlocoRequestDTO;
-import orientese.co.demo.dto.BlocoResponseDTO;
-import orientese.co.demo.dto.RoteiroRequestDTO;
-import orientese.co.demo.dto.RoteiroResponseDTO;
-import orientese.co.demo.service.RoteiroService;
+import orientese.co.api.dto.*;
+import orientese.co.api.service.RoteiroService;
 
 import java.util.logging.Logger;
 
@@ -92,6 +89,27 @@ public class RoteiroController {
             @PathVariable Long idBloco,
             @Valid @RequestBody BlocoRequestDTO dto) {
         return roteiroService.atualizarBloco(idRoteiro, idBloco, dto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{idRoteiro}/blocos/{idBloco}/decupagem")
+    public ResponseEntity<BlocoResponseDTO> carregarDecupagem(
+            @PathVariable Long idRoteiro,
+            @PathVariable Long idBloco) {
+        
+        return roteiroService.carregarDecupagem(idRoteiro, idBloco)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{idRoteiro}/blocos/{idBloco}/decupagem")
+    public ResponseEntity<BlocoResponseDTO> salvarDecupagem(
+            @PathVariable Long idRoteiro,
+            @PathVariable Long idBloco,
+            @RequestBody List<TrechoRequestDTO> trechosDTO) {
+        
+        return roteiroService.salvarDecupagem(idRoteiro, idBloco, trechosDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

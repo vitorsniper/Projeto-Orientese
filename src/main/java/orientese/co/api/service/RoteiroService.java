@@ -1,20 +1,19 @@
-package orientese.co.demo.service;
+package orientese.co.api.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import orientese.co.demo.dto.BlocoRequestDTO;
-import orientese.co.demo.dto.BlocoResponseDTO;
-import orientese.co.demo.dto.RoteiroRequestDTO;
-import orientese.co.demo.dto.RoteiroResponseDTO;
-import orientese.co.demo.model.Bloco;
-import orientese.co.demo.model.Roteiro;
-import orientese.co.demo.repository.RoteiroRepository;
+import orientese.co.api.dto.*;
+import orientese.co.api.model.Asset;
+import orientese.co.api.model.Bloco;
+import orientese.co.api.model.Roteiro;
+import orientese.co.api.model.Trecho;
+import orientese.co.api.repository.RoteiroRepository;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class RoteiroService {
@@ -64,14 +63,7 @@ public class RoteiroService {
 
         if (roteiro.getBlocos() != null) {
             blocosDTO = roteiro.getBlocos().stream()
-                    .map(bloco -> new BlocoResponseDTO(
-                            bloco.getId(),
-                            bloco.getTituloBloco(),
-                            bloco.getDirecaoVisual(),
-                            bloco.getDuracaoEmSegundos(),
-                            bloco.getConteudo(),
-                            bloco.getOrdem()
-                    ))
+                    .map(this::mapToBlocoResponseDTO)
                     .toList();
         }
 
@@ -141,14 +133,7 @@ public class RoteiroService {
 
             roteiroRepository.save(roteiroExistente);
 
-            return new BlocoResponseDTO(
-                    bloco.getId(),
-                    bloco.getTituloBloco(),
-                    bloco.getDirecaoVisual(),
-                    bloco.getDuracaoEmSegundos(),
-                    bloco.getConteudo(),
-                    bloco.getOrdem()
-            );
+            return mapToBlocoResponseDTO(bloco);
         });
     }
 
@@ -198,14 +183,70 @@ public class RoteiroService {
 
                 roteiroRepository.save(roteiro);
 
-                return new BlocoResponseDTO(
-                    bloco.getId(),
-                    bloco.getTituloBloco(),
-                    bloco.getDirecaoVisual(),
-                    bloco.getDuracaoEmSegundos(),
-                    bloco.getConteudo(),
-                    bloco.getOrdem()
-                );
+                return mapToBlocoResponseDTO(bloco);
             }));
+    }
+
+    @Transactional
+    public Optional<BlocoResponseDTO> carregarDecupagem(Long idRoteiro, Long idBloco) {
+        return roteiroRepository.findById(idRoteiro).flatMap(roteiro -> roteiro.getBlocos().stream()
+                .filter(b -> b.getId().equals(idBloco))
+                .findFirst()
+                .map(this::mapToBlocoResponseDTO));
+    }
+
+    @Transactional
+    public Optional<BlocoResponseDTO> salvarDecupagem(Long idRoteiro, Long idBloco, List<TrechoRequestDTO> trechosDTO) {
+        return roteiroRepository.findById(idRoteiro).flatMap(roteiro -> roteiro.getBlocos().stream()
+                .filter(b -> b.getId().equals(idBloco))
+                .findFirst()
+                .map(bloco -> {
+                    // Limpa os trechos antigos (o Hibernate apaga do banco automaticamente por causa do orphanRemoval)
+                    bloco.getTrechos().clear();
+
+                    // Converte os DTOs que vieram do Frontend para Entidades reais
+                    List<Trecho> novosTrechos = trechosDTO.stream().map(dto -> {
+                        Trecho trecho = new Trecho();
+                        trecho.setTexto(dto.texto());
+                        trecho.setStatus(dto.status());
+                        trecho.setBloco(bloco);
+
+                        if (dto.assets() != null) {
+                            List<Asset> assets = dto.assets().stream().map(assetDto -> {
+                                Asset asset = new Asset();
+                                asset.setUrl(assetDto.url());
+                                asset.setObservacao(assetDto.observacao());
+                                asset.setTrecho(trecho);
+                                return asset;
+                            }).toList();
+                            trecho.setAssets(assets);
+                        }
+                        return trecho;
+                    }).toList();
+
+                    // Salva os novos trechos
+                    bloco.getTrechos().addAll(novosTrechos);
+                    roteiroRepository.save(roteiro);
+
+                    // Devolve o bloco atualizado
+                    return mapToBlocoResponseDTO(bloco);
+                }));
+    }
+
+    // Método auxiliar para evitar repetição de código
+    private BlocoResponseDTO mapToBlocoResponseDTO(Bloco bloco) {
+        List<TrechoResponseDTO> trechosResponse = (bloco.getTrechos() != null) ? 
+                bloco.getTrechos().stream().map(t -> new TrechoResponseDTO(
+                        t.getId(), t.getTexto(), t.getStatus(),
+                        (t.getAssets() != null) ? 
+                            t.getAssets().stream().map(a -> new AssetResponseDTO(a.getId(), a.getUrl(), a.getObservacao())).collect(Collectors.toList())
+                            : null
+                )).collect(Collectors.toList())
+                : null;
+
+        return new BlocoResponseDTO(
+                bloco.getId(), bloco.getTituloBloco(), bloco.getDirecaoVisual(),
+                bloco.getDuracaoEmSegundos(), bloco.getConteudo(), bloco.getOrdem(), trechosResponse
+        );
     }
 }

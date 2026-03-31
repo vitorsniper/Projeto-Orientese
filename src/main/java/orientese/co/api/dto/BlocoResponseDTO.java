@@ -1,4 +1,6 @@
-package orientese.co.demo.dto;
+package orientese.co.api.dto;
+
+import java.util.List;
 
 public record BlocoResponseDTO(
         Long id,
@@ -6,5 +8,6 @@ public record BlocoResponseDTO(
         String direcaoVisual,
         Integer duracaoEmSegundos,
         String conteudo,
-        Integer ordem
+        Integer ordem,
+        List<TrechoResponseDTO> trechos
 ) {}
